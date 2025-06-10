@@ -41,14 +41,64 @@ async function Main() {
 
     // Get allSchedule
     app.get("/schedules", async (req, res) => {
-      const cursor = await gymScheduleCollection.find().toArray();
+      const { searchParams } = req.query;
+      let query = {};
+      if (searchParams) {
+        query = { title: { $regex: searchParams, $options: "i" } };
+      }
+      const cursor = await gymScheduleCollection.find(query).toArray();
       res.send(cursor);
+    });
+
+    // Get a Single Schedule
+    app.get("/schedules/:id", async (req, res) => {
+      const result = await gymScheduleCollection.findOne({
+        _id: new ObjectId(req.params.id),
+      });
+      res.send(result);
     });
 
     // Delete a Schedule
     app.delete("/schedule/:id", async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await gymScheduleCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Update Schedule
+    app.patch("/schedule/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const schedule = req.body;
+      console.log(schedule);
+      const updateSchedule = {
+        $set: {
+          title: schedule?.title,
+          day: schedule?.day,
+          date: schedule?.date,
+          hour: schedule?.hour,
+        },
+      };
+
+      const result = await gymScheduleCollection.updateOne(
+        query,
+        updateSchedule
+      );
+      res.send(result);
+    });
+
+    // Update Complete State
+    app.patch("/completeStatus/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const updateSchedule = {
+        $set: {
+          isCompleted: true,
+        },
+      };
+
+      const result = await gymScheduleCollection.updateOne(
+        query,
+        updateSchedule
+      );
       res.send(result);
     });
 
